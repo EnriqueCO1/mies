@@ -201,6 +201,17 @@ async def send_message(
         # Drop the user message we JUST inserted — its content will be
         # passed separately below using the freshly-uploaded file_payloads.
         history_rows = msg_result.data[:-1]
+
+        # Cap history at the last `MAX_HISTORY_MESSAGES` so very long
+        # conversations don't balloon the input-token cost on every turn.
+        # 12 messages = 6 user/assistant pairs, which gives Claude enough
+        # context for natural follow-ups while bounding cost. Older turns
+        # remain in Supabase (the user can still scroll up in the UI),
+        # they just aren't re-fed to the model.
+        MAX_HISTORY_MESSAGES = 12
+        if len(history_rows) > MAX_HISTORY_MESSAGES:
+            history_rows = history_rows[-MAX_HISTORY_MESSAGES:]
+
         history_msg_ids = [m["id"] for m in history_rows]
 
         # Fetch all INPUT attachments for every historical message in
