@@ -417,6 +417,7 @@ REGLAS:
 - Tono profesional, directo, sin rodeos. Responde en el idioma del arquitecto.
 
 HERRAMIENTAS:
+USA LAS HERRAMIENTAS CON ECONOMÍA. Una sola búsqueda bien formulada suele bastar; no la repitas con sinónimos. Si los primeros resultados no responden a la pregunta, dilo en lugar de seguir buscando.
 - **search_normativa(query, category)** — busca en PGOU/CTE/LOE. Usa `category='pgou'` para urbanismo municipal, `'cte'` para CTE, `'loe'` para LOE, `'both'` (por defecto) para los tres. No la uses para saludos ni cuando ya tengas el contexto.
 - **consultar_bcca(query|codigo)** — precios. CADA VEZ que pidan tabla de precios, partidas, mediciones o presupuestos. Si la BCCA no tiene una partida, dilo en vez de inventar.
 - **consultar_catastro(ref_catastral)** — datos del inmueble por referencia catastral.
@@ -487,8 +488,8 @@ Si el mensaje incluye `[Attached: …]`, son archivos que el arquitecto subió: 
                         },
                         "max_results": {
                             "type": "integer",
-                            "description": "Número de resultados (default 8)",
-                            "default": 8,
+                            "description": "Número de resultados (default 5)",
+                            "default": 5,
                         },
                     },
                     "required": ["query"],
@@ -727,7 +728,19 @@ Si el mensaje incluye `[Attached: …]`, son archivos que el arquitecto subió: 
         self._log_cache_usage("initial", response)
 
         # Handle tool calls
+        # Hard cap on tool-loop iterations. Without this, an uncertain
+        # model can chain 10-15 search calls before answering — every
+        # one of those re-feeds the prior tool results back into the
+        # next request, ballooning input tokens. 6 is generous for
+        # multi-step questions (search_normativa twice + consultar_bcca
+        # + consultar_catastro is only 4) while catching runaways.
+        # On the iteration that hits the cap we send `tool_choice="none"`
+        # to FORCE Claude to commit to a final text answer instead of
+        # silently truncating.
+        MAX_TOOL_ITERATIONS = 6
+        tool_iterations = 0
         while response.stop_reason == "tool_use":
+            tool_iterations += 1
             # Handle ALL tool_use blocks in this response (Claude can call
             # multiple tools in one turn, e.g. search_normativa + consultar_catastro).
             # Each tool_use MUST have a corresponding tool_result or the API rejects it.
@@ -757,7 +770,7 @@ Si el mensaje incluye `[Attached: …]`, son archivos que el arquitecto subió: 
                         query=tool_input["query"],
                         subject=subject_filter,
                         level=level_filter,
-                        max_results=tool_input.get("max_results", 8),
+                        max_results=tool_input.get("max_results", 5),
                         category=tool_input.get("category"),
                         project_municipio=project_municipio,
                     )
@@ -915,14 +928,26 @@ Si el mensaje incluye `[Attached: …]`, son archivos que el arquitecto subió: 
             messages.append({"role": "assistant", "content": response.content})
             messages.append({"role": "user", "content": tool_results})
 
-            async with self.anthropic_client.beta.messages.stream(
+            # If we've reached the iteration cap, FORCE Claude to commit
+            # to a final text answer on this next call by sending
+            # `tool_choice={"type": "none"}` — it can't call another tool.
+            force_final = tool_iterations >= MAX_TOOL_ITERATIONS
+            stream_kwargs: Dict[str, Any] = dict(
                 model="claude-sonnet-4-5-20250929",
                 max_tokens=4000,
                 system=system_param,
                 tools=tools,
                 messages=messages,
                 betas=["files-api-2025-04-14"],
-            ) as stream:
+            )
+            if force_final:
+                logger.warning(
+                    f"Tool-loop hit cap of {MAX_TOOL_ITERATIONS} iterations — "
+                    f"forcing final answer with tool_choice=none"
+                )
+                stream_kwargs["tool_choice"] = {"type": "none"}
+
+            async with self.anthropic_client.beta.messages.stream(**stream_kwargs) as stream:
                 async for event in stream:
                     if getattr(event, "type", "") == "content_block_delta":
                         delta = getattr(event, "delta", None)
@@ -932,6 +957,13 @@ Si el mensaje incluye `[Attached: …]`, son archivos que el arquitecto subió: 
                                 yield {"type": "text_delta", "text": text_chunk}
                 response = await stream.get_final_message()
             self._log_cache_usage("tool-loop", response)
+
+            # `tool_choice=none` guarantees stop_reason != "tool_use" on
+            # the response, so the while-condition exits naturally on
+            # the next check. Be explicit about exiting in case the
+            # API ever surprises us.
+            if force_final:
+                break
 
         # Extract final text
         final_response = ""
