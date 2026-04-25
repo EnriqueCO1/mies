@@ -1,0 +1,71 @@
+# ==============================================================
+# Mies — root .gitignore
+#
+# Every directory that commits code has its own .gitignore too
+# (backend/, frontend/), but this catches everything that must
+# never be in GitHub regardless of where it ends up.
+# ==============================================================
+
+# Secrets — never, ever commit these
+.env
+.env.*
+!.env.example
+!**/.env.example
+
+# OS noise
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# IDE
+.idea/
+.vscode/
+*.sublime-*
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+venv/
+.venv/
+env/
+
+# Node
+node_modules/
+.pnp
+.pnp.*
+.yarn-integrity
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Next.js
+.next/
+out/
+*.tsbuildinfo
+next-env.d.ts
+
+# Build / dist
+dist/
+build/
+
+# Test / coverage
+coverage/
+.nyc_output/
+
+# Logs
+*.log
+logs/
+
+# Local scratch
+/tmp/
+/scratch/
+
+# Claude Code local state (per-project agent data, may contain context)
+.claude/

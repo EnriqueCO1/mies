@@ -1,0 +1,19 @@
+# Railway service config for the Mies Next.js frontend.
+# Railway picks this up when the service's Root Directory is /frontend.
+
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
+
+# NEXT_PUBLIC_API_URL is baked into the client bundle at BUILD time
+# (not just runtime) — Railway needs the value during `npm run build`.
+# Set it in the service's Variables tab; this ARG mapping just makes
+# sure the Dockerfile picks it up.
+buildArgs = ["NEXT_PUBLIC_API_URL"]
+
+[deploy]
+healthcheckPath = "/"
+healthcheckTimeout = 30
+
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 3

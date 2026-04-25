@@ -1,0 +1,45 @@
+# Virtualenvs + caches — must NEVER end up in the image
+venv/
+.venv/
+env/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Secrets — Railway sets env vars at runtime instead
+.env
+.env.*
+!.env.example
+
+# Developer-only tooling
+.DS_Store
+.vscode/
+.idea/
+*.swp
+
+# Migrations run in the Supabase SQL editor, not from the image —
+# no reason to bloat the container with them.
+migrations/
+
+# One-off indexing scripts run locally against production DB.
+# They're not part of the request-serving path, so they stay out
+# of the deployed image.
+scripts/
+
+# Schema reference
+schema.sql
+
+# Git + CI metadata
+.git/
+.gitignore
+.github/
+
+# Railway / deploy meta
+railway.toml
+Dockerfile
+.dockerignore
+README.md

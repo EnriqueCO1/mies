@@ -1,0 +1,31 @@
+# node_modules is resolved fresh inside the build stage
+node_modules/
+
+# Build artifacts
+.next/
+out/
+dist/
+
+# Env
+.env
+.env.*
+!.env.example
+
+# Dev metadata
+.DS_Store
+.vscode/
+.idea/
+*.swp
+
+# Git / CI / deploy configs
+.git/
+.gitignore
+.github/
+Dockerfile
+.dockerignore
+railway.toml
+README.md
+
+# Repo-specific
+CLAUDE.md
+AGENTS.md

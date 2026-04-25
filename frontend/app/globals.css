@@ -1,0 +1,135 @@
+@import "tailwindcss";
+
+/* ── Design Tokens ── */
+:root {
+  /* Dark theme (landing, registration) */
+  --bg: #0a0a0a;
+  --surface: #1c1c1e;
+  --surface-light: #2c2c2e;
+
+  /* Text */
+  --white: #f5f5f7;
+  --white-dim: #a1a1a6;
+  --white-muted: #6e6e73;
+  --white-ghost: #48484a;
+
+  /* Light theme (sidebar, chat) */
+  --light-bg: #f5f5f7;
+  --light-surface: #ffffff;
+  --light-border: rgba(0, 0, 0, 0.06);
+  --light-text: #1c1c1e;
+  --light-text-dim: #86868b;
+
+  /* Accent */
+  --accent: #f5f5f7;
+
+  /* Easing */
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ── Font stacks ── */
+
+/* Serif for AI assistant answers (Lora ≈ Tiempos Text) */
+.font-serif-answer {
+  font-family: "Lora", Georgia, "Times New Roman", serif;
+}
+
+/* Geometric sans for buttons + conversation titles (Space Grotesk ≈ Styrene A) */
+.font-ui {
+  font-family: "Space Grotesk", "Outfit", -apple-system, sans-serif;
+}
+
+/* ── Base ── */
+body {
+  font-family: "Outfit", -apple-system, BlinkMacSystemFont, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.08);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.15);
+}
+
+/* ── Selection ── */
+::selection {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+/* ── Interactive cursor ── */
+/* Tailwind v4 preflight defaults `button` to `cursor: default` at the
+   @layer base level. To restore the classic hand cursor everywhere
+   interactive, we declare it inside @layer utilities (which wins against
+   base) and also use `!important` as belt-and-suspenders so arbitrary
+   utility classes like `cursor-default` can't accidentally re-disable it
+   on the chat UI. Disabled buttons keep the default arrow; textareas and
+   inputs keep their text caret because those don't match. */
+@layer utilities {
+  button:not(:disabled),
+  a[href],
+  summary,
+  label[for],
+  [role="button"]:not([aria-disabled="true"]),
+  [role="link"] {
+    cursor: pointer !important;
+  }
+}
+
+/* ── Keyframes ── */
+
+/* Marching-ants: a 1px dotted outline whose dashes travel around the
+   element continuously. Implemented with four edge gradients so it works
+   on `rounded-none` (square) corners. */
+@keyframes marchingAnts {
+  to {
+    background-position:
+      6px 0,       /* top edge slides right */
+      -6px 100%,   /* bottom edge slides left */
+      0 -6px,      /* left edge slides up */
+      100% 6px;    /* right edge slides down */
+  }
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes logoFadeIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.88);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}

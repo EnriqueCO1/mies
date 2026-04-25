@@ -1,0 +1,16 @@
+# Railway service config for the Mies FastAPI backend.
+# Railway picks this up when the service's Root Directory is /backend.
+
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+# Railway's health check: hits this path after boot. `/` already
+# returns {"status": "ok", ...} so we reuse it.
+healthcheckPath = "/"
+healthcheckTimeout = 30
+
+# Don't auto-restart on every crash — a broken build shouldn't hot-loop.
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 3
